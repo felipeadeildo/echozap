@@ -1,11 +1,12 @@
+from sqlalchemy import select
+
 from alexa.session import AlexaResponse
 from database.engine import async_session_factory
 from database.models import ProcessedMessage
-from database.repo import MessageRepo
-from sqlalchemy import select
 
 
 async def handle(body: dict) -> dict:
+    """Read the five most recent unread messages aloud via Alexa."""
     slots = body.get("request", {}).get("intent", {}).get("slots", {})
     contact_name = slots.get("ContactName", {}).get("value")
 
@@ -24,6 +25,7 @@ async def handle(body: dict) -> dict:
 
     speech = ""
     for msg in messages:
-        speech += f"{msg.sender_name} disse: {msg.content_preview or msg.summary or 'mensagem de mídia'}. "
+        preview = msg.content_preview or msg.summary or "mensagem de mídia"
+        speech += f"{msg.sender_name} disse: {preview}. "
 
     return AlexaResponse.speak(speech)

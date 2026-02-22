@@ -8,12 +8,14 @@ engine = create_async_engine(settings.database_url, echo=False)
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_session() -> AsyncGenerator[AsyncSession]:
+    """Yield an async database session for use as a FastAPI dependency."""
     async with async_session_factory() as session:
         yield session
 
 
 async def init_db() -> None:
+    """Create all database tables defined in the ORM metadata."""
     from database.models import Base
 
     async with engine.begin() as conn:

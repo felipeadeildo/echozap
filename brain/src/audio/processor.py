@@ -12,15 +12,19 @@ MEDIA_DIR = Path(settings.media_dir)
 
 
 class AudioProcessor:
+    """Handles downloading, converting, and transcribing WhatsApp audio messages."""
+
     @staticmethod
-    async def process(
-        message_id: str, download_url: str
-    ) -> tuple[str, str, str | None]:
+    async def process(message_id: str, download_url: str) -> tuple[str, str, str | None]:
         """
-        1. Baixa OGG do WhatsApp Go API
-        2. Converte para MP3 via ffmpeg
-        3. Transcreve com Whisper (se habilitado)
-        4. Retorna (local_path, public_url, transcription)
+        Download, convert to MP3, and optionally transcribe an audio message.
+
+        Returns a tuple of (local_mp3_path, public_url, transcription_or_None).
+
+        Steps:
+        1. Download OGG from WhatsApp Go API
+        2. Convert to MP3 via ffmpeg
+        3. Transcribe with Whisper (if enabled)
         """
         MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 

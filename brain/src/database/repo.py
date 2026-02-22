@@ -7,8 +7,11 @@ from database.models import ProcessedMessage, UrgencyLevel, UserPreferences
 
 
 class MessageRepo:
+    """Repository for CRUD operations on ProcessedMessage records."""
+
     @staticmethod
     async def create(session: AsyncSession, data: dict) -> ProcessedMessage:
+        """Insert a new ProcessedMessage and return the persisted instance."""
         msg = ProcessedMessage(**data)
         session.add(msg)
         await session.commit()
@@ -17,6 +20,7 @@ class MessageRepo:
 
     @staticmethod
     async def get_unread_summary(session: AsyncSession) -> list[dict]:
+        """Return per-chat unread counts and highest urgency level."""
         result = await session.execute(
             select(ProcessedMessage).where(ProcessedMessage.read_by_user == False)  # noqa: E712
         )
@@ -42,6 +46,7 @@ class MessageRepo:
         public_url: str,
         transcription: str | None,
     ) -> None:
+        """Update audio paths and transcription for a processed message."""
         msg = await session.get(ProcessedMessage, record_id)
         if msg:
             msg.audio_local_path = local_path
@@ -57,6 +62,7 @@ class MessageRepo:
         summary: str,
         notified: bool,
     ) -> None:
+        """Update urgency, summary, and notified status after AI classification."""
         msg = await session.get(ProcessedMessage, record_id)
         if msg:
             msg.urgency = UrgencyLevel[urgency]
@@ -66,9 +72,8 @@ class MessageRepo:
             await session.commit()
 
     @staticmethod
-    async def get_since_hours(
-        session: AsyncSession, hours: int
-    ) -> list[ProcessedMessage]:
+    async def get_since_hours(session: AsyncSession, hours: int) -> list[ProcessedMessage]:
+        """Return all messages received within the last N hours."""
         since = datetime.datetime.utcnow() - datetime.timedelta(hours=hours)
         result = await session.execute(
             select(ProcessedMessage).where(ProcessedMessage.received_at >= since)
@@ -77,6 +82,7 @@ class MessageRepo:
 
     @staticmethod
     async def mark_read(session: AsyncSession, chat_jid: str) -> None:
+        """Mark all unread messages in a given chat as read."""
         result = await session.execute(
             select(ProcessedMessage).where(
                 ProcessedMessage.chat_jid == chat_jid,
@@ -89,11 +95,12 @@ class MessageRepo:
 
 
 class PreferencesRepo:
+    """Repository for reading and updating UserPreferences (single-user system)."""
+
     @staticmethod
     async def get(session: AsyncSession) -> UserPreferences:
-        result = await session.execute(
-            select(UserPreferences).where(UserPreferences.id == 1)
-        )
+        """Fetch the user preferences row, creating it with defaults if absent."""
+        result = await session.execute(select(UserPreferences).where(UserPreferences.id == 1))
         prefs = result.scalar_one_or_none()
         if prefs is None:
             prefs = UserPreferences(id=1)
@@ -108,6 +115,7 @@ class PreferencesRepo:
         token: str,
         expires: datetime.datetime,
     ) -> None:
+        """Persist a new Alexa proactive token and its expiration timestamp."""
         prefs = await PreferencesRepo.get(session)
         prefs.alexa_proactive_token = token
         prefs.alexa_proactive_token_expires = expires

@@ -48,6 +48,7 @@ INTENT_MAP = {
 
 
 async def dispatch(body: dict) -> dict:
+    """Route an Alexa request body to the appropriate intent handler."""
     request_type = body.get("request", {}).get("type", "")
 
     if request_type == "LaunchRequest":

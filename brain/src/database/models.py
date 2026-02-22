@@ -2,16 +2,17 @@ import datetime
 import enum
 import json
 
-from sqlalchemy import Enum as SAEnum
-from sqlalchemy import Text
+from sqlalchemy import Enum as SAEnum, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
-    pass
+    """SQLAlchemy declarative base for all ORM models."""
 
 
 class UrgencyLevel(enum.Enum):
+    """Urgency levels used to prioritise notification delivery."""
+
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
@@ -37,9 +38,7 @@ class ProcessedMessage(Base):
     urgency: Mapped[UrgencyLevel] = mapped_column(SAEnum(UrgencyLevel), default=UrgencyLevel.LOW)
     notified: Mapped[bool] = mapped_column(default=False)
     read_by_user: Mapped[bool] = mapped_column(default=False)
-    received_at: Mapped[datetime.datetime] = mapped_column(
-        default=datetime.datetime.utcnow
-    )
+    received_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow)
     processed_at: Mapped[datetime.datetime | None]
 
 
@@ -64,12 +63,15 @@ class UserPreferences(Base):
     alexa_proactive_token_expires: Mapped[datetime.datetime | None]
 
     def vip_contacts_list(self) -> list[str]:
+        """Return the VIP contacts as a Python list."""
         return json.loads(self.vip_contacts)
 
     def urgent_keywords_list(self) -> list[str]:
+        """Return the urgent keywords as a Python list."""
         return json.loads(self.urgent_keywords)
 
     def is_quiet_hours_now(self) -> bool:
+        """Return True if the current time is within the configured quiet hours."""
         now = datetime.datetime.now().strftime("%H:%M")
         start = self.quiet_hours_start
         end = self.quiet_hours_end

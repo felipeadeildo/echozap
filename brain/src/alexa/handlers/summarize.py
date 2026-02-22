@@ -7,6 +7,7 @@ from whatsapp.client import whatsapp_client
 
 
 async def handle(body: dict) -> dict:
+    """Summarise a WhatsApp conversation using the AI summarizer agent and read it aloud."""
     slots = body.get("request", {}).get("intent", {}).get("slots", {})
     contact_name = slots.get("ContactName", {}).get("value")
 

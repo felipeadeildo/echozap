@@ -1,5 +1,5 @@
-from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
@@ -10,7 +10,8 @@ from webhook.router import router as webhook_router
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001
+    """Initialise the database and scheduler on startup; shut down on exit."""
     await init_db()
     scheduler.start()
     yield
@@ -25,4 +26,5 @@ app.include_router(webhook_router)
 
 @app.get("/health")
 async def health() -> dict:
+    """Return a simple liveness check payload."""
     return {"status": "ok"}

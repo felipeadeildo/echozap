@@ -1,10 +1,12 @@
+from sqlalchemy import select
+
 from alexa.session import AlexaResponse
 from database.engine import async_session_factory
 from database.models import ProcessedMessage
-from sqlalchemy import select
 
 
 async def handle(body: dict) -> dict:
+    """Stream the most recent audio message via Alexa AudioPlayer, with transcription."""
     slots = body.get("request", {}).get("intent", {}).get("slots", {})
     contact_name = slots.get("ContactName", {}).get("value")
 
@@ -36,7 +38,10 @@ async def handle(body: dict) -> dict:
         "response": {
             "outputSpeech": {
                 "type": "SSML",
-                "ssml": f"<speak>Áudio de {sender}. {transcription} <audio src=\"{msg.audio_public_url}\"/></speak>",
+                "ssml": (
+                    f"<speak>Áudio de {sender}. {transcription}"
+                    f' <audio src="{msg.audio_public_url}"/></speak>'
+                ),
             },
             "directives": [
                 {

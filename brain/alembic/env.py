@@ -11,7 +11,7 @@ from alembic import context
 # Adiciona src/ ao path para importar os models
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from database.models import Base  # noqa: E402
+from database.models import Base
 
 config = context.config
 
@@ -27,6 +27,7 @@ if database_url:
 
 
 def run_migrations_offline() -> None:
+    """Run migrations without a live database connection (URL-based)."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -38,13 +39,15 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def do_run_migrations(connection):
+def do_run_migrations(connection: object) -> None:
+    """Configure and run migrations against an active connection."""
     context.configure(connection=connection, target_metadata=target_metadata)
     with context.begin_transaction():
         context.run_migrations()
 
 
 async def run_async_migrations() -> None:
+    """Create an async engine and run migrations via a synchronous callback."""
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -56,6 +59,7 @@ async def run_async_migrations() -> None:
 
 
 def run_migrations_online() -> None:
+    """Run migrations with a live async database connection."""
     asyncio.run(run_async_migrations())
 
 

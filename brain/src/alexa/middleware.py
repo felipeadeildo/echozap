@@ -1,12 +1,11 @@
-"""Alexa request signature verification.
+"""
+Alexa request signature verification.
 
 Reference: https://developer.amazon.com/docs/custom-skills/host-a-custom-skill-as-a-web-service.html
 """
 
 import base64
-import hashlib
-import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlparse
 
 import httpx
@@ -17,6 +16,7 @@ from fastapi import HTTPException, Request
 
 
 async def verify_alexa_signature(request: Request) -> None:
+    """Verify the Alexa request signature and timestamp, raising HTTP 400 on failure."""
     cert_url = request.headers.get("SignatureCertChainUrl", "")
     signature_b64 = request.headers.get("Signature", "")
     body = await request.body()
@@ -34,8 +34,8 @@ async def verify_alexa_signature(request: Request) -> None:
     signature = base64.b64decode(signature_b64)
     try:
         cert.public_key().verify(signature, body, padding.PKCS1v15(), hashes.SHA1())
-    except Exception:
-        raise HTTPException(status_code=400, detail="Alexa signature verification failed")
+    except Exception as err:
+        raise HTTPException(status_code=400, detail="Alexa signature verification failed") from err
 
     import json
 
@@ -43,7 +43,7 @@ async def verify_alexa_signature(request: Request) -> None:
     timestamp_str = payload.get("request", {}).get("timestamp", "")
     if timestamp_str:
         ts = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
-        if abs((datetime.now(timezone.utc) - ts).total_seconds()) > 150:
+        if abs((datetime.now(UTC) - ts).total_seconds()) > 150:
             raise HTTPException(status_code=400, detail="Request timestamp too old")
 
 
@@ -58,7 +58,7 @@ def _validate_cert_url(url: str) -> None:
 
 
 def _validate_cert(cert: x509.Certificate) -> None:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if cert.not_valid_before_utc > now or cert.not_valid_after_utc < now:
         raise HTTPException(status_code=400, detail="Alexa cert expired")
     san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName)

@@ -5,6 +5,8 @@ from agents.base import SONNET, WhatsAppDeps
 
 
 class ConversationSummary(BaseModel):
+    """Structured summary of a WhatsApp conversation, optimized for voice output."""
+
     summary: str
     key_points: list[str]
     action_required: bool

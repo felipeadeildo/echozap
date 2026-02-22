@@ -13,6 +13,7 @@ async def webhook_endpoint(
     background_tasks: BackgroundTasks,
     _body: bytes = Depends(verify_webhook_hmac),
 ) -> dict:
+    """Receive a WhatsApp webhook event and enqueue message processing in the background."""
     body = await request.json()
     payload = WebhookPayload(**body)
 

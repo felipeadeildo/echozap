@@ -3,6 +3,7 @@ from whatsapp.client import whatsapp_client
 
 
 async def handle(body: dict) -> dict:
+    """Send a WhatsApp message to the specified contact on behalf of the user."""
     slots = body.get("request", {}).get("intent", {}).get("slots", {})
     contact_name = slots.get("ContactName", {}).get("value")
     message_content = slots.get("MessageContent", {}).get("value")

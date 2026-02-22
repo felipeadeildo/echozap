@@ -7,6 +7,7 @@ from whatsapp.client import whatsapp_client
 
 
 async def handle(body: dict) -> dict:
+    """Generate three reply options for the specified contact and present them via Alexa."""
     session_id = body["session"]["sessionId"]
     slots = body.get("request", {}).get("intent", {}).get("slots", {})
     contact_name = slots.get("ContactName", {}).get("value")
@@ -39,11 +40,15 @@ async def handle(body: dict) -> dict:
     )
     options = result.output.options
 
-    await SessionStore.set(session_id, "pending_replies", {
-        "contact": contact_name,
-        "jid": jid,
-        "options": [o.text for o in options],
-    })
+    await SessionStore.set(
+        session_id,
+        "pending_replies",
+        {
+            "contact": contact_name,
+            "jid": jid,
+            "options": [o.text for o in options],
+        },
+    )
 
     speech = "Aqui estão 3 opções. "
     for i, opt in enumerate(options, 1):
@@ -54,6 +59,7 @@ async def handle(body: dict) -> dict:
 
 
 async def handle_selection(body: dict) -> dict:
+    """Send the reply option selected by the user and confirm via Alexa speech."""
     session_id = body["session"]["sessionId"]
     slots = body.get("request", {}).get("intent", {}).get("slots", {})
     option_num_str = slots.get("OptionNumber", {}).get("value", "0")

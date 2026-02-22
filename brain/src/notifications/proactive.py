@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import httpx
 
@@ -11,17 +11,20 @@ logger = logging.getLogger(__name__)
 
 
 class ProactiveNotifier:
+    """Sends proactive Alexa notifications using the Alexa Proactive Events API."""
+
     EVENTS_URL = "https://api.amazonalexa.com/v1/proactiveEvents/"
     TOKEN_URL = "https://api.amazon.com/auth/o2/token"
 
     @classmethod
-    async def notify_text(cls, sender: str, content: str, urgency: str) -> None:
+    async def notify_text(cls, sender: str, content: str, urgency: str) -> None:  # noqa: ARG003
+        """Deliver a proactive message-alert event to the user's Alexa device."""
         token = await cls._get_token()
         if not token:
             logger.warning("No Alexa token available, skipping notification")
             return
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         payload = {
             "timestamp": now.isoformat(),
             "referenceId": f"msg-{now.timestamp()}",
@@ -53,14 +56,14 @@ class ProactiveNotifier:
                 logger.error("Proactive event failed: %s %s", resp.status_code, resp.text)
 
     @classmethod
-    async def notify_audio(
-        cls, sender: str, audio_url: str, transcription: str | None
-    ) -> None:
+    async def notify_audio(cls, sender: str, _audio_url: str, transcription: str | None) -> None:
+        """Notify Alexa about a new audio message, using the transcription as content."""
         content = transcription or f"Áudio de {sender}"
         await cls.notify_text(sender=sender, content=content, urgency="MEDIUM")
 
     @classmethod
     async def notify_silent(cls) -> None:
+        """Trigger a silent LED-only notification (not yet implemented)."""
         logger.debug("Silent notification (LED only) — not yet implemented")
 
     @classmethod
@@ -71,11 +74,11 @@ class ProactiveNotifier:
         async with async_session_factory() as session:
             prefs = await PreferencesRepo.get(session)
 
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             if (
                 prefs.alexa_proactive_token
                 and prefs.alexa_proactive_token_expires
-                and prefs.alexa_proactive_token_expires.replace(tzinfo=timezone.utc) > now
+                and prefs.alexa_proactive_token_expires.replace(tzinfo=UTC) > now
             ):
                 return prefs.alexa_proactive_token
 

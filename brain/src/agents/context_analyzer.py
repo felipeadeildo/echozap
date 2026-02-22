@@ -7,6 +7,8 @@ from agents.base import SONNET, WhatsAppDeps
 
 
 class ConversationContext(BaseModel):
+    """Structured analysis of a WhatsApp conversation's context."""
+
     topic: str
     sentiment: str  # positive | neutral | negative
     participants: list[str]

@@ -14,11 +14,14 @@ async def verify_webhook_hmac(request: Request) -> bytes:
     if not settings.webhook_secret:
         return body
 
-    expected = "sha256=" + hmac.new(
-        settings.webhook_secret.encode(),
-        body,
-        hashlib.sha256,
-    ).hexdigest()
+    expected = (
+        "sha256="
+        + hmac.new(
+            settings.webhook_secret.encode(),
+            body,
+            hashlib.sha256,
+        ).hexdigest()
+    )
 
     if not hmac.compare_digest(signature_header, expected):
         raise HTTPException(status_code=401, detail="Invalid webhook signature")

@@ -30,7 +30,9 @@ async def process_incoming_message(payload: WebhookPayload) -> None:
                     message_id=msg.id,
                     download_url=msg.media_url,
                 )
-                await MessageRepo.update_audio(session, record.id, local_path, public_url, transcription)
+                await MessageRepo.update_audio(
+                    session, record.id, local_path, public_url, transcription
+                )
                 msg = msg.with_content(transcription or "[áudio sem transcrição]")
             except Exception:
                 logger.exception("Failed to process audio for message %s", msg.id)

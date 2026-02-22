@@ -3,7 +3,8 @@ from database.engine import async_session_factory
 from database.repo import MessageRepo
 
 
-async def handle(body: dict) -> dict:
+async def handle(_body: dict) -> dict:
+    """Return an Alexa speech response summarising unread message counts."""
     async with async_session_factory() as session:
         unread = await MessageRepo.get_unread_summary(session)
 
