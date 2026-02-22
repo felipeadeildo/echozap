@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 
+import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from config import settings
@@ -15,8 +16,6 @@ async def get_session() -> AsyncGenerator[AsyncSession]:
 
 
 async def init_db() -> None:
-    """Create all database tables defined in the ORM metadata."""
-    from database.models import Base
-
+    """Verify the database connection is reachable on startup."""
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(sa.text("SELECT 1"))

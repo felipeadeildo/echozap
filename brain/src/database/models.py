@@ -40,7 +40,7 @@ class ProcessedMessage(Base):
     notified: Mapped[bool] = mapped_column(default=False)
     read_by_user: Mapped[bool] = mapped_column(default=False)
     received_at: Mapped[datetime.datetime] = mapped_column(
-        default=lambda: datetime.datetime.now(UTC)
+        default=lambda: datetime.datetime.now(UTC).replace(tzinfo=None)
     )
     processed_at: Mapped[datetime.datetime | None]
 
