@@ -1,6 +1,7 @@
 import datetime
 import enum
 import json
+from datetime import UTC
 
 from sqlalchemy import Enum as SAEnum, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -38,7 +39,9 @@ class ProcessedMessage(Base):
     urgency: Mapped[UrgencyLevel] = mapped_column(SAEnum(UrgencyLevel), default=UrgencyLevel.LOW)
     notified: Mapped[bool] = mapped_column(default=False)
     read_by_user: Mapped[bool] = mapped_column(default=False)
-    received_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow)
+    received_at: Mapped[datetime.datetime] = mapped_column(
+        default=lambda: datetime.datetime.now(UTC)
+    )
     processed_at: Mapped[datetime.datetime | None]
 
 

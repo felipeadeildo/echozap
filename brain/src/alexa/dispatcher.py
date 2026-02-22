@@ -1,3 +1,6 @@
+from collections.abc import Callable, Coroutine
+from typing import Any
+
 from alexa.handlers import (
     check_messages,
     generate_reply,
@@ -8,8 +11,10 @@ from alexa.handlers import (
 )
 from alexa.session import AlexaResponse
 
+AsyncHandler = Callable[[dict], Coroutine[Any, Any, dict]]
 
-def _help(_body: dict) -> dict:
+
+async def _help(_body: dict) -> dict:
     return AlexaResponse.speak(
         "Você pode me pedir para verificar mensagens, ler mensagens, "
         "resumir conversas, gerar respostas ou enviar mensagens.",
@@ -17,7 +22,7 @@ def _help(_body: dict) -> dict:
     )
 
 
-def _stop(_body: dict) -> dict:
+async def _stop(_body: dict) -> dict:
     return AlexaResponse.speak("Até mais!")
 
 
@@ -33,7 +38,7 @@ async def _launch(_body: dict) -> dict:
     )
 
 
-INTENT_MAP = {
+INTENT_MAP: dict[str, AsyncHandler] = {
     "CheckMessagesIntent": check_messages.handle,
     "ReadMessagesIntent": read_messages.handle,
     "SummarizeConversationIntent": summarize.handle,

@@ -1,4 +1,5 @@
 import datetime
+from datetime import UTC
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -68,13 +69,13 @@ class MessageRepo:
             msg.urgency = UrgencyLevel[urgency]
             msg.summary = summary
             msg.notified = notified
-            msg.processed_at = datetime.datetime.utcnow()
+            msg.processed_at = datetime.datetime.now(UTC)
             await session.commit()
 
     @staticmethod
     async def get_since_hours(session: AsyncSession, hours: int) -> list[ProcessedMessage]:
         """Return all messages received within the last N hours."""
-        since = datetime.datetime.utcnow() - datetime.timedelta(hours=hours)
+        since = datetime.datetime.now(UTC) - datetime.timedelta(hours=hours)
         result = await session.execute(
             select(ProcessedMessage).where(ProcessedMessage.received_at >= since)
         )

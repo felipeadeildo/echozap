@@ -4,6 +4,7 @@ from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
 
 from config import settings
+from database.models import UserPreferences
 
 
 def make_agent[OutputT, DepsT](
@@ -15,7 +16,7 @@ def make_agent[OutputT, DepsT](
     max_tokens: int = 2048,
 ) -> Agent[DepsT, OutputT]:
     """Factory para criar agents com model e settings vindos da config."""
-    return Agent(
+    return Agent(  # type: ignore[return-value]
         settings.ai_model,
         output_type=output_type,
         deps_type=deps_type,
@@ -31,5 +32,5 @@ class WhatsAppDeps:
 
     chat_jid: str
     recent_messages: list[dict]
-    preferences: object  # UserPreferences (evita import circular)
+    preferences: UserPreferences
     whatsapp_client: object  # WhatsAppClient

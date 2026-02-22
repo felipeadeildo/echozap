@@ -56,7 +56,7 @@ class ProactiveNotifier:
                 logger.error("Proactive event failed: %s %s", resp.status_code, resp.text)
 
     @classmethod
-    async def notify_audio(cls, sender: str, _audio_url: str, transcription: str | None) -> None:
+    async def notify_audio(cls, sender: str, audio_url: str, transcription: str | None) -> None:  # noqa: ARG003
         """Notify Alexa about a new audio message, using the transcription as content."""
         content = transcription or f"Áudio de {sender}"
         await cls.notify_text(sender=sender, content=content, urgency="MEDIUM")

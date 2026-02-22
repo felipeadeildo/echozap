@@ -12,6 +12,7 @@ import httpx
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from fastapi import HTTPException, Request
 
 
@@ -32,8 +33,11 @@ async def verify_alexa_signature(request: Request) -> None:
     _validate_cert(cert)
 
     signature = base64.b64decode(signature_b64)
+    public_key = cert.public_key()
+    if not isinstance(public_key, RSAPublicKey):
+        raise HTTPException(status_code=400, detail="Alexa cert must use RSA key")
     try:
-        cert.public_key().verify(signature, body, padding.PKCS1v15(), hashes.SHA1())
+        public_key.verify(signature, body, padding.PKCS1v15(), hashes.SHA1())
     except Exception as err:
         raise HTTPException(status_code=400, detail="Alexa signature verification failed") from err
 
