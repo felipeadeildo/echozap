@@ -18,11 +18,15 @@ RUN uv sync --frozen --no-dev
 FROM deps AS dev
 RUN uv sync --frozen
 COPY src/ ./src/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./alembic.ini
 ENV PYTHONPATH=/app/src
 CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # --- prod target ---
 FROM deps AS prod
 COPY src/ ./src/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./alembic.ini
 ENV PYTHONPATH=/app/src
 CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

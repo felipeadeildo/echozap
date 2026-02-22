@@ -1,3 +1,5 @@
+"""Webhook processing pipeline — classifies and routes incoming WhatsApp messages."""
+
 import logging
 
 from agents.base import WhatsAppDeps
@@ -14,37 +16,38 @@ logger = logging.getLogger(__name__)
 
 
 async def process_incoming_message(payload: WebhookPayload) -> None:
-    """Pipeline assíncrono executado em background task."""
-    msg = payload.message
+    """Async pipeline executed as a FastAPI background task for each incoming message."""
+    msg = payload.payload
 
     async with async_session_factory() as session:
-        # 1. Salvar raw no DB
+        # 1. Persist raw message to DB
         record = await MessageRepo.create(session, payload.to_db_dict())
 
-        # 2. Processar áudio se houver
-        transcription = None
-        public_url = None
-        if msg.type == "audio" and msg.media_url:
+        # 2. Process audio when present
+        transcription: str | None = None
+        public_url: str | None = None
+        if msg.message_type == "audio" and msg.audio:
             try:
                 local_path, public_url, transcription = await AudioProcessor.process(
                     message_id=msg.id,
-                    download_url=msg.media_url,
+                    local_audio_path=msg.audio,
                 )
                 await MessageRepo.update_audio(
                     session, record.id, local_path, public_url, transcription
                 )
-                msg = msg.with_content(transcription or "[áudio sem transcrição]")
             except Exception:
                 logger.exception("Failed to process audio for message %s", msg.id)
 
-        # 3. Buscar contexto da conversa
-        recent = await whatsapp_client.get_messages(msg.chat_jid, limit=10)
+        # 3. Fetch recent conversation context
+        recent = await whatsapp_client.get_messages(msg.chat_id, limit=10)
 
-        # 4. Classificar
+        # 4. Load user preferences
         prefs = await PreferencesRepo.get(session)
 
+    effective_content = transcription or msg.body or ""
+
     deps = WhatsAppDeps(
-        chat_jid=msg.chat_jid,
+        chat_jid=msg.chat_id,
         recent_messages=recent,
         preferences=prefs,
         whatsapp_client=whatsapp_client,
@@ -52,7 +55,7 @@ async def process_incoming_message(payload: WebhookPayload) -> None:
 
     try:
         decision = await classifier_agent.run(
-            f"Mensagem de {msg.sender_name}: {msg.content or ''}",
+            f"Mensagem de {msg.from_name}: {effective_content}",
             deps=deps,
         )
         result = decision.output
@@ -60,7 +63,7 @@ async def process_incoming_message(payload: WebhookPayload) -> None:
         logger.exception("Classifier agent failed for message %s", msg.id)
         return
 
-    # 5. Atualizar DB com resultado da classificação
+    # 5. Update DB with classification result
     async with async_session_factory() as session:
         await MessageRepo.update_classification(
             session,
@@ -70,14 +73,14 @@ async def process_incoming_message(payload: WebhookPayload) -> None:
             notified=result.should_notify,
         )
 
-    # 6. Agir conforme urgência
+    # 6. Act on urgency level
     if not result.should_notify:
         return
 
     if result.urgency == "CRITICAL":
         await ProactiveNotifier.notify_text(
-            sender=msg.sender_name,
-            content=(msg.content or "")[:200],
+            sender=msg.from_name,
+            content=effective_content[:200],
             urgency="CRITICAL",
         )
 
@@ -85,7 +88,7 @@ async def process_incoming_message(payload: WebhookPayload) -> None:
         try:
             summary = await summarizer_agent.run("Resuma esta conversa", deps=deps)
             await ProactiveNotifier.notify_text(
-                sender=msg.sender_name,
+                sender=msg.from_name,
                 content=summary.output.summary,
                 urgency="HIGH",
             )
@@ -93,9 +96,9 @@ async def process_incoming_message(payload: WebhookPayload) -> None:
             logger.exception("Summarizer failed for message %s", msg.id)
 
     elif result.urgency == "MEDIUM":
-        if msg.type == "audio" and public_url:
+        if msg.message_type == "audio" and public_url:
             await ProactiveNotifier.notify_audio(
-                sender=msg.sender_name,
+                sender=msg.from_name,
                 audio_url=public_url,
                 transcription=transcription,
             )

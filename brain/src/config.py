@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     # WhatsApp Go REST
     whatsapp_api_url: str = "http://localhost:3000"
+    whatsapp_device_id: str = "brain"
     webhook_secret: str = ""
 
     # AI - model string no formato "provider:model-name"

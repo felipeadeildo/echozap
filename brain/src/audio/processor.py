@@ -1,8 +1,9 @@
+"""Audio processing: convert OGG voice notes to MP3 and transcribe with Whisper."""
+
 import asyncio
 import logging
+import shutil
 from pathlib import Path
-
-import httpx
 
 from config import settings
 
@@ -12,35 +13,36 @@ MEDIA_DIR = Path(settings.media_dir)
 
 
 class AudioProcessor:
-    """Handles downloading, converting, and transcribing WhatsApp audio messages."""
+    """Handles converting and transcribing WhatsApp voice note messages."""
 
     @staticmethod
-    async def process(message_id: str, download_url: str) -> tuple[str, str, str | None]:
+    async def process(message_id: str, local_audio_path: str) -> tuple[str, str, str | None]:
         """
-        Download, convert to MP3, and optionally transcribe an audio message.
+        Convert a local OGG file to MP3 and optionally transcribe it.
 
-        Returns a tuple of (local_mp3_path, public_url, transcription_or_None).
+        The WhatsApp Go container writes audio to a local path inside the shared
+        volume (e.g. ``/data/media/xxxx.ogg``). This method converts it to MP3
+        for Alexa playback and runs Whisper if enabled.
 
-        Steps:
-        1. Download OGG from WhatsApp Go API
-        2. Convert to MP3 via ffmpeg
-        3. Transcribe with Whisper (if enabled)
+        Returns:
+            Tuple of ``(local_mp3_path, public_url, transcription_or_None)``.
+
         """
         MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Download
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(download_url)
-            resp.raise_for_status()
-            ogg_path = MEDIA_DIR / f"{message_id}.ogg"
-            ogg_path.write_bytes(resp.content)
+        ogg_src = Path(local_audio_path)
+        ogg_dst = MEDIA_DIR / f"{message_id}.ogg"
 
-        # Conversão OGG → MP3
+        # Copy to our media dir if the file lives elsewhere
+        if ogg_src != ogg_dst:
+            shutil.copy2(ogg_src, ogg_dst)
+
+        # Convert OGG → MP3
         mp3_path = MEDIA_DIR / f"{message_id}.mp3"
         proc = await asyncio.create_subprocess_exec(
             "ffmpeg",
             "-i",
-            str(ogg_path),
+            str(ogg_dst),
             "-codec:a",
             "libmp3lame",
             "-q:a",
@@ -51,7 +53,7 @@ class AudioProcessor:
             stderr=asyncio.subprocess.DEVNULL,
         )
         await proc.wait()
-        ogg_path.unlink(missing_ok=True)
+        ogg_dst.unlink(missing_ok=True)
 
         public_url = f"{settings.public_base_url}/media/{message_id}.mp3"
 
@@ -66,6 +68,7 @@ class AudioProcessor:
 
 
 async def _transcribe(mp3_path: Path) -> str:
+    """Run faster-whisper transcription in a thread pool executor."""
     from faster_whisper import WhisperModel
 
     loop = asyncio.get_event_loop()

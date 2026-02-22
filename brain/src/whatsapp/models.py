@@ -1,38 +1,60 @@
+"""Pydantic models for the WhatsApp Go REST API webhook payloads."""
+
 from pydantic import BaseModel
 
 
-class WebhookMessage(BaseModel):
-    """Parsed representation of a single incoming WhatsApp message from the webhook."""
+class MessagePayload(BaseModel):
+    """Inner payload of a webhook event — the actual message fields."""
 
     id: str
-    chat_jid: str
-    sender_jid: str
-    sender_name: str
-    is_group: bool
-    type: str  # text | audio | image | document
-    content: str | None = None
-    media_url: str | None = None
-    timestamp: int
+    chat_id: str  # JID of the chat (e.g. "5511999999999@s.whatsapp.net" or "...@g.us")
+    from_: str | None = None  # sender JID (alias for 'from' — reserved keyword)
+    from_name: str = ""  # display name of the sender
+    body: str | None = None  # text body (for text messages)
+    audio: str | None = None  # local file path to OGG audio (voice notes)
+    image: str | None = None  # local file path to image
+    document: str | None = None  # local file path to document
+    timestamp: int | str | None = None
 
-    def with_content(self, content: str) -> WebhookMessage:
-        """Return a copy of this message with the content field replaced."""
-        return self.model_copy(update={"content": content})
+    model_config = {"populate_by_name": True}
+
+    @property
+    def is_group(self) -> bool:
+        """Return True when this message comes from a group chat."""
+        return self.chat_id.endswith("@g.us")
+
+    @property
+    def message_type(self) -> str:
+        """Infer message type from which media field is populated."""
+        if self.audio:
+            return "audio"
+        if self.image:
+            return "image"
+        if self.document:
+            return "document"
+        return "text"
+
+    @property
+    def content(self) -> str | None:
+        """Return the text content or None for pure media messages."""
+        return self.body or None
 
 
 class WebhookPayload(BaseModel):
-    """Top-level webhook envelope containing the event type and message data."""
+    """Top-level envelope sent by the WhatsApp Go REST container on each event."""
 
-    event: str
-    message: WebhookMessage
+    event: str  # e.g. "message", "read", "typing", ...
+    device_id: str
+    payload: MessagePayload
 
     def to_db_dict(self) -> dict:
-        """Convert the payload into a dict suitable for inserting into the database."""
-        msg = self.message
+        """Convert to a dict suitable for inserting into the processed_messages table."""
+        msg = self.payload
         return {
             "message_id": msg.id,
-            "chat_jid": msg.chat_jid,
-            "sender_name": msg.sender_name,
+            "chat_jid": msg.chat_id,
+            "sender_name": msg.from_name,
             "is_group": msg.is_group,
-            "message_type": msg.type,
-            "content_preview": (msg.content or "")[:500],
+            "message_type": msg.message_type,
+            "content_preview": (msg.body or "")[:500],
         }
