@@ -25,6 +25,17 @@ services:
       - whatsapp_data:/app/storages
     restart: unless-stopped
 
+  migrator:
+    build: ./brain
+    command: uv run alembic -c /app/alembic.ini upgrade head
+    env_file: .env
+    environment:
+      DATABASE_URL: 'postgresql+asyncpg://brain:${DB_PASS}@postgres/brain'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
   brain:
     build: ./brain
     healthcheck:
@@ -33,26 +44,23 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    env_file: .env
     environment:
+      # Sobrescreve URLs do .env para usar hostnames internos do compose
       DATABASE_URL: 'postgresql+asyncpg://brain:${DB_PASS}@postgres/brain'
       REDIS_URL: 'redis://redis:6379/0'
       WHATSAPP_API_URL: 'http://whatsapp:3000'
-      ANTHROPIC_API_KEY: '${ANTHROPIC_API_KEY}'
-      ALEXA_SKILL_ID: '${ALEXA_SKILL_ID}'
-      ALEXA_CLIENT_ID: '${ALEXA_CLIENT_ID}'
-      ALEXA_CLIENT_SECRET: '${ALEXA_CLIENT_SECRET}'
-      ALEXA_USER_ID: '${ALEXA_USER_ID}'
-      WEBHOOK_SECRET: '${WEBHOOK_SECRET}'
-      MEDIA_DIR: '/data/media'
       PUBLIC_BASE_URL: 'https://${DOMAIN}'
-      WHISPER_ENABLED: '${WHISPER_ENABLED:-true}'
-      WHISPER_MODEL: '${WHISPER_MODEL:-small}'
+      MEDIA_DIR: '/data/media'
     volumes:
       - media_data:/data/media
     depends_on:
-      - postgres
-      - redis
-      - whatsapp
+      migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+      whatsapp:
+        condition: service_started
     restart: unless-stopped
 
   postgres:
@@ -63,6 +71,11 @@ services:
       POSTGRES_PASSWORD: '${DB_PASS}'
     volumes:
       - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brain"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     restart: unless-stopped
 
   redis:
