@@ -39,7 +39,7 @@ services:
   brain:
     build: ./brain
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      test: ['CMD', 'curl', '-sf', 'http://localhost:8000/health']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -54,6 +54,7 @@ services:
       MEDIA_DIR: '/data/media'
     volumes:
       - media_data:/data/media
+      - whatsapp_data:/app/storages:ro
     depends_on:
       migrator:
         condition: service_completed_successfully
@@ -72,7 +73,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U brain"]
+      test: ['CMD-SHELL', 'pg_isready -U brain']
       interval: 5s
       timeout: 3s
       retries: 10

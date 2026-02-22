@@ -10,6 +10,13 @@ from database.repo import PreferencesRepo
 logger = logging.getLogger(__name__)
 
 
+def _to_amazon_urgency(urgency: str) -> str:
+    """Normalise internal urgency values to the two values Amazon's API accepts."""
+    if urgency.upper() in ("HIGH", "CRITICAL", "URGENT"):
+        return "URGENT"
+    return "NORMAL"
+
+
 class ProactiveNotifier:
     """Sends proactive Alexa notifications using the Alexa Proactive Events API."""
 
@@ -36,7 +43,7 @@ class ProactiveNotifier:
                     "messageGroup": {
                         "creator": {"name": sender},
                         "count": 1,
-                        "urgency": urgency,
+                        "urgency": _to_amazon_urgency(urgency),
                     },
                 },
             },
@@ -59,7 +66,7 @@ class ProactiveNotifier:
     async def notify_audio(cls, sender: str, audio_url: str, transcription: str | None) -> None:  # noqa: ARG003
         """Notify Alexa about a new audio message, using the transcription as content."""
         content = transcription or f"Áudio de {sender}"
-        await cls.notify_text(sender=sender, content=content, urgency="MEDIUM")
+        await cls.notify_text(sender=sender, content=content, urgency="NORMAL")
 
     @classmethod
     async def notify_silent(cls) -> None:
