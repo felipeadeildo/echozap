@@ -1,0 +1,9 @@
+{$DOMAIN} {
+    reverse_proxy /alexa/*  brain:8000
+    reverse_proxy /webhook  brain:8000
+    reverse_proxy /media/*  brain:8000
+    reverse_proxy /wa/*     whatsapp:3000
+
+    # Rate limiting nos endpoints expostos
+    # (requer módulo caddy-ratelimit se quiser usar)
+}
