@@ -1,7 +1,6 @@
 from pydantic import BaseModel
-from pydantic_ai import Agent
 
-from agents.base import SONNET, WhatsAppDeps
+from agents.base import WhatsAppDeps, make_agent
 
 
 class ConversationSummary(BaseModel):
@@ -13,8 +12,7 @@ class ConversationSummary(BaseModel):
     suggested_actions: list[str]
 
 
-summarizer_agent = Agent(
-    SONNET,
+summarizer_agent = make_agent(
     output_type=ConversationSummary,
     deps_type=WhatsAppDeps,
     instructions="""

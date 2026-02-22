@@ -1,3 +1,4 @@
+from pydantic_ai.models import KnownModelName
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,8 +17,8 @@ class Settings(BaseSettings):
     whatsapp_api_url: str = "http://localhost:3000"
     webhook_secret: str = ""
 
-    # Anthropic
-    anthropic_api_key: str = ""
+    # AI - model string no formato "provider:model-name"
+    ai_model: KnownModelName = "anthropic:claude-sonnet-4-6"
 
     # Alexa
     alexa_skill_id: str = ""

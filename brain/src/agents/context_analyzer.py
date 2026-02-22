@@ -1,9 +1,8 @@
 """Context analyzer agent — stub para fase futura."""
 
 from pydantic import BaseModel
-from pydantic_ai import Agent
 
-from agents.base import SONNET, WhatsAppDeps
+from agents.base import WhatsAppDeps, make_agent
 
 
 class ConversationContext(BaseModel):
@@ -15,8 +14,7 @@ class ConversationContext(BaseModel):
     is_ongoing: bool
 
 
-context_analyzer_agent = Agent(
-    SONNET,
+context_analyzer_agent = make_agent(
     output_type=ConversationContext,
     deps_type=WhatsAppDeps,
     instructions="""

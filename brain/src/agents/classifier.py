@@ -1,9 +1,9 @@
 from typing import Literal
 
 from pydantic import BaseModel
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import RunContext
 
-from agents.base import SONNET, WhatsAppDeps
+from agents.base import WhatsAppDeps, make_agent
 
 
 class NotificationDecision(BaseModel):
@@ -16,8 +16,7 @@ class NotificationDecision(BaseModel):
     suggested_response: str | None = None
 
 
-classifier_agent = Agent(
-    SONNET,
+classifier_agent = make_agent(
     output_type=NotificationDecision,
     deps_type=WhatsAppDeps,
     instructions="""

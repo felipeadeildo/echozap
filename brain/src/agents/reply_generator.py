@@ -1,7 +1,6 @@
 from pydantic import BaseModel
-from pydantic_ai import Agent
 
-from agents.base import SONNET, WhatsAppDeps
+from agents.base import WhatsAppDeps, make_agent
 
 
 class ReplyOption(BaseModel):
@@ -18,8 +17,7 @@ class ReplyOptions(BaseModel):
     options: list[ReplyOption]  # sempre 3 opções
 
 
-reply_generator_agent = Agent(
-    SONNET,
+reply_generator_agent = make_agent(
     output_type=ReplyOptions,
     deps_type=WhatsAppDeps,
     instructions="""
@@ -28,4 +26,5 @@ reply_generator_agent = Agent(
     As respostas devem ser naturais, humanas, contextualizadas.
     Idioma: pt-BR.
     """,
+    temperature=0.7,
 )
