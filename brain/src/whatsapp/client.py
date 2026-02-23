@@ -49,16 +49,19 @@ class WhatsAppClient:
         if not contacts:
             return None
 
+        query = name.strip().lower()
         names = [c.get("name", "") for c in contacts if c.get("name")]
-        matches = get_close_matches(name, names, n=1, cutoff=0.5)
-        matched_name = matches[0] if matches else None
 
+        # 1. Exact word prefix match: "diego" matches "Diego Santos"
+        matched_name = next(
+            (n for n in names if any(word.lower().startswith(query) for word in n.split())),
+            None,
+        )
+
+        # 2. Fuzzy match with high cutoff as fallback
         if not matched_name:
-            # fallback: substring
-            matched_name = next(
-                (c["name"] for c in contacts if name.lower() in c.get("name", "").lower()),
-                None,
-            )
+            matches = get_close_matches(name, names, n=1, cutoff=0.7)
+            matched_name = matches[0] if matches else None
 
         if matched_name:
             contact = next(c for c in contacts if c.get("name") == matched_name)
