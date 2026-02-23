@@ -38,8 +38,8 @@ class WhatsAppClient:
         resp.raise_for_status()
         return resp.json()
 
-    async def find_contact(self, name: str) -> str | None:
-        """Resolve a contact display name to a JID using fuzzy local matching."""
+    async def find_contact(self, name: str) -> tuple[str, str] | None:
+        """Resolve a display name to a (matched_name, jid) tuple via fuzzy local matching."""
         from difflib import get_close_matches
 
         resp = await self._client.get("/user/my/contacts")
@@ -62,7 +62,9 @@ class WhatsAppClient:
 
         if matched_name:
             contact = next(c for c in contacts if c.get("name") == matched_name)
-            return contact.get("jid")
+            jid = contact.get("jid")
+            if jid:
+                return matched_name, jid
 
         return None
 

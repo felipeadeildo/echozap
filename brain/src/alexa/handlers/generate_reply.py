@@ -19,10 +19,11 @@ async def handle(body: dict) -> dict:
             "GenerateReplyIntent",
         )
 
-    jid = await whatsapp_client.find_contact(contact_name)
-    if not jid:
+    found = await whatsapp_client.find_contact(contact_name)
+    if not found:
         return AlexaResponse.speak(f"Não encontrei o contato {contact_name}.")
 
+    matched_name, jid = found
     msgs = await whatsapp_client.get_messages(jid, limit=20)
 
     async with async_session_factory() as session:
@@ -35,7 +36,7 @@ async def handle(body: dict) -> dict:
         whatsapp_client=whatsapp_client,
     )
     result = await reply_generator_agent.run(
-        f"Gere respostas para a conversa com {contact_name}",
+        f"Gere respostas para a conversa com {matched_name}",
         deps=deps,
     )
     options = result.output.options
@@ -44,7 +45,7 @@ async def handle(body: dict) -> dict:
         session_id,
         "pending_replies",
         {
-            "contact": contact_name,
+            "contact": matched_name,
             "jid": jid,
             "options": [o.text for o in options],
         },

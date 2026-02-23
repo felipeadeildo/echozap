@@ -18,10 +18,11 @@ async def handle(body: dict) -> dict:
             "SummarizeConversationIntent",
         )
 
-    jid = await whatsapp_client.find_contact(contact_name)
-    if not jid:
+    found = await whatsapp_client.find_contact(contact_name)
+    if not found:
         return AlexaResponse.speak(f"Não encontrei o contato {contact_name}.")
 
+    _matched_name, jid = found
     msgs = await whatsapp_client.get_messages(jid, limit=20)
 
     async with async_session_factory() as session:
