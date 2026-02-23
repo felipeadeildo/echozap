@@ -1,0 +1,140 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "zap zap",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                },
+                {
+                    "name": "CheckMessagesIntent",
+                    "slots": [],
+                    "samples": [
+                        "tenho mensagens",
+                        "verificar mensagens",
+                        "checar mensagens",
+                        "tem mensagem nova",
+                        "tem algo novo",
+                        "alguma mensagem nova",
+                        "quantas mensagens tenho",
+                        "o que eu perdi"
+                    ]
+                },
+                {
+                    "name": "ReadMessagesIntent",
+                    "slots": [
+                        {
+                            "name": "ContactName",
+                            "type": "AMAZON.Person"
+                        }
+                    ],
+                    "samples": [
+                        "ler mensagens",
+                        "leia as mensagens",
+                        "ler mensagens de {ContactName}",
+                        "leia as mensagens de {ContactName}",
+                        "o que disse {ContactName}",
+                        "mensagens de {ContactName}",
+                        "mostrar mensagens de {ContactName}"
+                    ]
+                },
+                {
+                    "name": "SummarizeConversationIntent",
+                    "slots": [
+                        {
+                            "name": "ContactName",
+                            "type": "AMAZON.Person"
+                        }
+                    ],
+                    "samples": [
+                        "resumir conversa",
+                        "resumir conversa com {ContactName}",
+                        "resumo de {ContactName}",
+                        "o que está acontecendo com {ContactName}",
+                        "resumo das mensagens"
+                    ]
+                },
+                {
+                    "name": "GenerateReplyIntent",
+                    "slots": [
+                        {
+                            "name": "ContactName",
+                            "type": "AMAZON.Person"
+                        }
+                    ],
+                    "samples": [
+                        "responder {ContactName}",
+                        "gerar resposta para {ContactName}",
+                        "como responder {ContactName}",
+                        "sugerir resposta para {ContactName}",
+                        "quero responder {ContactName}"
+                    ]
+                },
+                {
+                    "name": "SelectReplyIntent",
+                    "slots": [
+                        {
+                            "name": "OptionNumber",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "opção {OptionNumber}",
+                        "escolho a opção {OptionNumber}",
+                        "manda a {OptionNumber}",
+                        "{OptionNumber}"
+                    ]
+                },
+                {
+                    "name": "SendMessageIntent",
+                    "slots": [
+                        {
+                            "name": "ContactName",
+                            "type": "AMAZON.Person"
+                        },
+                        {
+                            "name": "MessageContent",
+                            "type": "AMAZON.SearchQuery"
+                        }
+                    ],
+                    "samples": [
+                        "enviar mensagem para {ContactName}",
+                        "mandar mensagem para {ContactName}",
+                        "falar com {ContactName}",
+                        "dizer para {ContactName} {MessageContent}",
+                        "mandar para {ContactName} {MessageContent}"
+                    ]
+                },
+                {
+                    "name": "PlayAudioIntent",
+                    "slots": [
+                        {
+                            "name": "ContactName",
+                            "type": "AMAZON.Person"
+                        }
+                    ],
+                    "samples": [
+                        "ouvir áudio de {ContactName}",
+                        "reproduzir áudio de {ContactName}",
+                        "tocar áudio de {ContactName}",
+                        "ouvir mensagem de voz de {ContactName}"
+                    ]
+                }
+            ],
+            "types": []
+        }
+    }
+}
