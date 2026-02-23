@@ -1,21 +1,14 @@
-# Dev overrides: sem TLS, portas expostas, hot-reload
+# Dev overrides: portas expostas, hot-reload
 services:
-  caddy:
-    profiles:
-      - prod # caddy desabilitado em dev por padrão
-
   brain:
     build:
       context: ./brain
       target: dev
-    ports:
-      - '8000:8000'
     environment:
       PUBLIC_BASE_URL: 'http://localhost:8000'
       WHISPER_ENABLED: 'false'
     volumes:
       - ./brain/src:/app/src:ro # hot-reload via volume mount
-      - media_data:/data/media
     command:
       [
         'uv',
@@ -28,10 +21,6 @@ services:
         '8000',
         '--reload',
       ]
-
-  whatsapp:
-    ports:
-      - '3000:3000' # acesso direto à API Go em dev
 
   postgres:
     ports:

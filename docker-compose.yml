@@ -1,17 +1,4 @@
 services:
-  caddy:
-    image: caddy:2-alpine
-    ports:
-      - '80:80'
-      - '443:443'
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-    depends_on:
-      - brain
-      - whatsapp
-    restart: unless-stopped
-
   whatsapp:
     image: aldinokemal2104/go-whatsapp-web-multidevice:latest
     command: rest
@@ -21,6 +8,8 @@ services:
       WHATSAPP_WEBHOOK_EVENTS: 'message'
       WHATSAPP_AUTO_MARK_READ: 'false'
       WHATSAPP_AUTO_DOWNLOAD_MEDIA: 'true'
+    ports:
+      - '${WHATSAPP_PORT:-3000}:3000'
     volumes:
       - whatsapp_data:/app/storages
     restart: unless-stopped
@@ -52,6 +41,8 @@ services:
       WHATSAPP_API_URL: 'http://whatsapp:3000'
       PUBLIC_BASE_URL: 'https://${DOMAIN}'
       MEDIA_DIR: '/data/media'
+    ports:
+      - '${BRAIN_PORT:-8000}:8000'
     volumes:
       - media_data:/data/media
       - whatsapp_data:/app/storages:ro
@@ -87,7 +78,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  caddy_data:
   whatsapp_data:
   pg_data:
   redis_data:
