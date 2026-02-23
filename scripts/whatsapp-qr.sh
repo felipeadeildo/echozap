@@ -2,8 +2,27 @@
 # Obtém e renderiza o QR code do WhatsApp direto no terminal
 set -euo pipefail
 
-YELLOW='\033[1;33m'; NC='\033[0m'
+YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
 warn() { echo -e "${YELLOW}!${NC} $*"; }
+
+# Detecta gerenciador de pacotes do OS
+install_hint() {
+  local pkg_qr="qrencode" pkg_zbar="zbar-tools"
+  echo ""
+  warn "Para renderizar o QR no terminal, instale:"
+  if command -v apt &>/dev/null; then
+    echo "    sudo apt install ${pkg_qr} ${pkg_zbar}"
+  elif command -v dnf &>/dev/null; then
+    echo "    sudo dnf install ${pkg_qr} zbar"
+  elif command -v pacman &>/dev/null; then
+    echo "    sudo pacman -Syu ${pkg_qr} zbar"
+  elif command -v zypper &>/dev/null; then
+    echo "    sudo zypper in ${pkg_qr} zbar"
+  else
+    echo "    qrencode  zbar-tools  (via gerenciador de pacotes do sistema)"
+  fi
+  echo ""
+}
 
 DEVICE_ID=$(grep WHATSAPP_DEVICE_ID .env 2>/dev/null | cut -d= -f2 || echo brain)
 
@@ -17,13 +36,6 @@ QR_PATH=$(echo "$LOGIN" | python3 -c \
 if [[ -z "$QR_PATH" ]]; then
   echo "Erro: não foi possível obter o QR code da API."
   exit 1
-fi
-
-# Instala ferramentas se necessário (silencioso)
-if ! command -v qrencode &>/dev/null || ! command -v zbarimg &>/dev/null; then
-  warn "Instalando qrencode e zbar-tools para renderizar QR no terminal..."
-  apt-get install -y -qq qrencode zbar-tools 2>/dev/null || \
-    { warn "Sem permissão para instalar. Tente: sudo apt install qrencode zbar-tools"; }
 fi
 
 echo ""
@@ -45,15 +57,15 @@ if command -v qrencode &>/dev/null && command -v zbarimg &>/dev/null; then
   if [[ -n "$QR_TEXT" ]]; then
     qrencode -t UTF8 "$QR_TEXT"
   else
-    warn "Não foi possível decodificar o PNG. URL da imagem:"
-    echo "  $QR_PATH"
+    warn "Não foi possível decodificar o PNG."
+    echo -e "  ${CYAN}${QR_PATH}${NC}"
+    install_hint
   fi
 else
-  warn "Ferramentas não disponíveis. URL da imagem:"
-  echo "  $QR_PATH"
+  echo -e "  ${CYAN}${QR_PATH}${NC}"
+  install_hint
 fi
 
-echo ""
 echo -e "${YELLOW}  O código expira em ~30s. Rode novamente se necessário.${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
