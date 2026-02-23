@@ -10,11 +10,26 @@ from alexa.handlers import (
     send_message,
     summarize,
 )
-from alexa.session import AlexaResponse
+from alexa.session import AlexaResponse, SessionStore
 
 logger = logging.getLogger(__name__)
 
 AsyncHandler = Callable[[dict], Coroutine[Any, Any, dict]]
+
+_NEGATIVE = {"não", "nao", "negativo", "errado", "errada", "cancelar", "cancel", "nope"}
+_POSITIVE = {
+    "sim",
+    "yes",
+    "ok",
+    "confirmar",
+    "confirmo",
+    "certo",
+    "certa",
+    "isso",
+    "esse",
+    "esta",
+    "este",
+}
 
 
 async def _help(_body: dict) -> dict:
@@ -70,6 +85,36 @@ async def dispatch(body: dict) -> dict:
 
     if request_type == "IntentRequest":
         intent_name = body["request"]["intent"]["name"]
+
+        # When a contact confirmation is pending, intercept any intent and check
+        # whether the user said something affirmative or negative before routing
+        # normally — the NLU often misfires on conversational yes/no phrases.
+        if intent_name not in ("AMAZON.StopIntent", "AMAZON.CancelIntent"):
+            session_id = body.get("session", {}).get("sessionId", "")
+            if session_id:
+                pending_confirm = await SessionStore.get(session_id, "pending_confirm")
+                if pending_confirm:
+                    # Collect all words the user said (intent name + slot values)
+                    spoken_words: set[str] = set()
+                    for slot in body["request"]["intent"].get("slots", {}).values():
+                        for w in (slot.get("value") or "").lower().split():
+                            spoken_words.add(w)
+                    for w in intent_name.lower().replace(".", " ").split():
+                        spoken_words.add(w)
+
+                    if spoken_words & _POSITIVE:
+                        return await send_message.handle_yes(body)
+                    if spoken_words & _NEGATIVE:
+                        return await send_message.handle_no(body)
+
+                    # Could not determine — re-ask
+                    contact = pending_confirm.get("contact", "")
+                    return AlexaResponse.speak(
+                        f"Não entendi. Encontrei {contact}. Diga sim para confirmar ou não para cancelar.",  # noqa: E501
+                        reprompt="Diga sim ou não.",
+                        end_session=False,
+                    )
+
         handler = INTENT_MAP.get(intent_name)
         if handler:
             try:
