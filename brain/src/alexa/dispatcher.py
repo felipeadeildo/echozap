@@ -94,13 +94,17 @@ async def dispatch(body: dict) -> dict:
             if session_id:
                 pending_confirm = await SessionStore.get(session_id, "pending_confirm")
                 if pending_confirm:
-                    # Collect all words the user said (intent name + slot values)
+                    # First check the intent name directly
+                    if intent_name == "AMAZON.YesIntent":
+                        return await send_message.handle_yes(body)
+                    if intent_name == "AMAZON.NoIntent":
+                        return await send_message.handle_no(body)
+
+                    # NLU misfired — collect slot words and check against known yes/no
                     spoken_words: set[str] = set()
                     for slot in body["request"]["intent"].get("slots", {}).values():
                         for w in (slot.get("value") or "").lower().split():
                             spoken_words.add(w)
-                    for w in intent_name.lower().replace(".", " ").split():
-                        spoken_words.add(w)
 
                     if spoken_words & _POSITIVE:
                         return await send_message.handle_yes(body)
