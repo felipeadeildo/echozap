@@ -83,18 +83,30 @@ else
 
   info "Obtendo QR code para conectar o WhatsApp..."
   LOGIN=$(wa_get_h "http://localhost:3000/app/login" "X-Device-Id: ${DEVICE_ID}")
-  QR_URL=$(echo "$LOGIN" | python3 -c "import sys,json; print(json.load(sys.stdin)['results']['qr_link'])")
+  QR_TEXT=$(echo "$LOGIN" | python3 -c "import sys,json; r=json.load(sys.stdin)['results']; print(r.get('qr_code') or r.get('qr_link',''))" 2>/dev/null || echo "")
+  QR_URL=$(echo "$LOGIN" | python3 -c "import sys,json; print(json.load(sys.stdin)['results'].get('qr_link',''))" 2>/dev/null || echo "")
 
   echo ""
-  echo -e "${YELLOW}┌─────────────────────────────────────────────────────────────┐${NC}"
-  echo -e "${YELLOW}│  Escaneie o QR code com o WhatsApp:                          │${NC}"
-  echo -e "${YELLOW}│  Dispositivos vinculados → Vincular dispositivo               │${NC}"
-  echo -e "${YELLOW}│                                                               │${NC}"
-  echo -e "${YELLOW}│  ${QR_URL}${NC}"
-  echo -e "${YELLOW}│                                                               │${NC}"
-  echo -e "${YELLOW}│  O código expira em ~30s. Se expirar, rode:                  │${NC}"
-  echo -e "${YELLOW}│  make whatsapp-login                                          │${NC}"
-  echo -e "${YELLOW}└─────────────────────────────────────────────────────────────┘${NC}"
+  echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo -e "${YELLOW}  Escaneie o QR code com o WhatsApp:${NC}"
+  echo -e "${YELLOW}  Dispositivos vinculados → Vincular dispositivo${NC}"
+  echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo ""
+
+  # Renderiza QR no terminal se qrencode estiver disponível e tiver o dado bruto
+  if command -v qrencode &>/dev/null && [[ -n "$QR_TEXT" ]] && [[ "$QR_TEXT" != http* ]]; then
+    qrencode -t UTF8 "$QR_TEXT"
+  else
+    warn "qrencode não encontrado — exibindo URL da imagem."
+    echo ""
+    echo "  $QR_URL"
+    echo ""
+    warn "Para instalar: apt install qrencode  (Ubuntu/Debian)"
+  fi
+
+  echo ""
+  echo -e "${YELLOW}  O código expira em ~30s. Se expirar: make whatsapp-login${NC}"
+  echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   echo ""
 
   info "Aguardando conexão WhatsApp (até 90s)..."
@@ -116,7 +128,7 @@ else
 fi
 
 # ── Subir stack completa ──────────────────────────────────────────────────────
-info "Subindo stack completa (migrator + brain + caddy)..."
+info "Subindo stack completa (migrator + brain)..."
 docker compose up -d || true
 
 echo ""
