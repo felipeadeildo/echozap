@@ -114,8 +114,7 @@
                         "enviar mensagem para {ContactName}",
                         "mandar mensagem para {ContactName}",
                         "falar com {ContactName}",
-                        "dizer para {ContactName} {MessageContent}",
-                        "mandar para {ContactName} {MessageContent}"
+                        "{MessageContent}"
                     ]
                 },
                 {
