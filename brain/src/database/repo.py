@@ -2,6 +2,7 @@ import datetime
 from datetime import UTC
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import ProcessedMessage, UrgencyLevel, UserPreferences
@@ -11,13 +12,21 @@ class MessageRepo:
     """Repository for CRUD operations on ProcessedMessage records."""
 
     @staticmethod
-    async def create(session: AsyncSession, data: dict) -> ProcessedMessage:
-        """Insert a new ProcessedMessage and return the persisted instance."""
-        msg = ProcessedMessage(**data)
-        session.add(msg)
+    async def create(session: AsyncSession, data: dict) -> ProcessedMessage | None:
+        """
+        Insert a new ProcessedMessage, ignoring duplicates (idempotent).
+
+        Returns the persisted instance, or None if message_id already exists.
+        """
+        stmt = (
+            insert(ProcessedMessage)
+            .values(**data)
+            .on_conflict_do_nothing(index_elements=["message_id"])
+            .returning(ProcessedMessage)
+        )
+        result = await session.execute(stmt)
         await session.commit()
-        await session.refresh(msg)
-        return msg
+        return result.scalar_one_or_none()
 
     @staticmethod
     async def get_unread_summary(session: AsyncSession) -> list[dict]:

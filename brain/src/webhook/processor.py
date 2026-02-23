@@ -22,6 +22,9 @@ async def process_incoming_message(payload: WebhookPayload) -> None:
     async with async_session_factory() as session:
         # 1. Persist raw message to DB
         record = await MessageRepo.create(session, payload.to_db_dict())
+        if record is None:
+            logger.debug("Duplicate webhook for message %s, skipping.", payload.payload.id)
+            return
 
         # 2. Process audio when present
         transcription: str | None = None
