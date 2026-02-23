@@ -99,6 +99,21 @@
                     ]
                 },
                 {
+                    "name": "CaptureMessageIntent",
+                    "slots": [
+                        {
+                            "name": "MessageContent",
+                            "type": "AMAZON.SearchQuery"
+                        }
+                    ],
+                    "samples": [
+                        "dizer {MessageContent}",
+                        "falar {MessageContent}",
+                        "mandar {MessageContent}",
+                        "escrever {MessageContent}"
+                    ]
+                },
+                {
                     "name": "SendMessageIntent",
                     "slots": [
                         {

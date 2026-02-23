@@ -45,6 +45,7 @@ INTENT_MAP: dict[str, AsyncHandler] = {
     "GenerateReplyIntent": generate_reply.handle,
     "SelectReplyIntent": generate_reply.handle_selection,
     "SendMessageIntent": send_message.handle,
+    "CaptureMessageIntent": send_message.handle_capture,
     "PlayAudioIntent": play_audio.handle,
     "AMAZON.HelpIntent": _help,
     "AMAZON.StopIntent": _stop,
