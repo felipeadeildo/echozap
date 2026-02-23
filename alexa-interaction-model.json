@@ -104,10 +104,6 @@
                         {
                             "name": "ContactName",
                             "type": "AMAZON.Person"
-                        },
-                        {
-                            "name": "MessageContent",
-                            "type": "AMAZON.SearchQuery"
                         }
                     ],
                     "samples": [
