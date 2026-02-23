@@ -113,8 +113,7 @@
                     "samples": [
                         "enviar mensagem para {ContactName}",
                         "mandar mensagem para {ContactName}",
-                        "falar com {ContactName}",
-                        "{MessageContent}"
+                        "falar com {ContactName}"
                     ]
                 },
                 {
