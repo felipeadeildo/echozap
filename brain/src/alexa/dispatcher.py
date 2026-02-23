@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable, Coroutine
 from typing import Any
 
@@ -10,6 +11,8 @@ from alexa.handlers import (
     summarize,
 )
 from alexa.session import AlexaResponse
+
+logger = logging.getLogger(__name__)
 
 AsyncHandler = Callable[[dict], Coroutine[Any, Any, dict]]
 
@@ -67,6 +70,10 @@ async def dispatch(body: dict) -> dict:
         intent_name = body["request"]["intent"]["name"]
         handler = INTENT_MAP.get(intent_name)
         if handler:
-            return await handler(body)
+            try:
+                return await handler(body)
+            except Exception:
+                logger.exception("Error handling intent %s", intent_name)
+                return AlexaResponse.speak("Ocorreu um erro interno. Tente novamente em instantes.")
 
     return AlexaResponse.speak("Não entendi. Tente novamente.")
